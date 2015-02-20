@@ -2,7 +2,6 @@ package com.avira.couchdoop.spark
 
 import com.avira.couchdoop.CouchbaseArgs
 import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseOperation, CouchbaseAction}
-import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.SparkContext._
 
@@ -33,6 +32,7 @@ object CouchdoopSparkDemo {
         val escapedLines = lines.map(_.replaceAll("\"", """\\""""))
         val linesJson = escapedLines.mkString("[\"", "\",\"", "\"]")
         (firstWord, new CouchbaseAction(CouchbaseOperation.SET, linesJson))
+//        (firstWord, linesJson)
     }
 
     val hadoopConf = sc.hadoopConfiguration
