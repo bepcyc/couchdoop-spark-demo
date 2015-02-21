@@ -1,11 +1,17 @@
 package com.avira.couchdoop.spark
 
-import com.avira.couchdoop.CouchbaseArgs
-import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseOperation, CouchbaseAction}
+import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseAction}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.SparkContext._
 
+/**
+ * Read a text file from HDFS and index each line in Couchbase by its first word by using
+ * CouchbaseOutputFormat.
+ *
+ * Run it with --conf "spark.files.userClassPathFirst=false" (default) because of Bug SPARK-4877
+ * in Spark 1.2.x.
+ */
 object CouchdoopSparkDemo {
 
   def main(args: Array[String]) {
@@ -16,6 +22,11 @@ object CouchdoopSparkDemo {
 
     val conf = new SparkConf().setAppName("couchdoop-spark-demo")
     val sc = new SparkContext(conf)
+
+    // Configure Hadoop CouchbaseOutputFormat.
+    val hadoopJob = Job.getInstance(sc.hadoopConfiguration)
+    CouchbaseOutputFormat.initJob(hadoopJob, urls, bucket, password)
+    val hadoopConf = hadoopJob.getConfiguration
 
     val allLines = sc.textFile(inputFile)
 
@@ -28,26 +39,16 @@ object CouchdoopSparkDemo {
         None
     }.groupByKey()
 
+    // Prepare output for CouchbaseOutputFormat.
     val cbOutput = index.map {
       case (firstWord, lines) =>
         val escapedLines = lines.map(_.replaceAll("\"", """\\""""))
         val linesJson = escapedLines.mkString("[\"", "\",\"", "\"]")
-        (firstWord, new CouchbaseAction(CouchbaseOperation.SET, linesJson))
-//        (firstWord, linesJson)
+        (firstWord, CouchbaseAction.createSetAction(linesJson))
     }
 
-    val hadoopConf = sc.hadoopConfiguration
-    hadoopConf.set(CouchbaseArgs.ARG_COUCHBASE_URLS.getPropertyName, urls)
-    hadoopConf.set(CouchbaseArgs.ARG_COUCHBASE_BUCKET.getPropertyName, bucket)
-    hadoopConf.set(CouchbaseArgs.ARG_COUCHBASE_PASSWORD.getPropertyName, password)
-
-    cbOutput.saveAsNewAPIHadoopFile("tests/bogus_01", classOf[String], classOf[CouchbaseAction],
-        classOf[CouchbaseOutputFormat], hadoopConf)
-
-//    val hadoopJob = Job.getInstance(hadoopConf)
-//    CouchbaseOutputFormat.initJob(hadoopJob, urls, bucket, password)
-//    hadoopConf.setBoolean("spark.hadoop.validateOutputSpecs", false)
-//    cbOutput.saveAsNewAPIHadoopDataset(hadoopConf)
+    // Save to Couchbase with CouchbaseOutputFormat.
+    cbOutput.saveAsNewAPIHadoopDataset(hadoopConf)
 
     sc.stop()
   }
