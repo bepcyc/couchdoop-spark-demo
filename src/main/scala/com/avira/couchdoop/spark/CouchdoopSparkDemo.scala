@@ -2,6 +2,7 @@ package com.avira.couchdoop.spark
 
 import com.avira.couchdoop.CouchbaseArgs
 import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseOperation, CouchbaseAction}
+import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.SparkContext._
 
@@ -21,7 +22,7 @@ object CouchdoopSparkDemo {
     // Create an index from the first word of lines to a list of lines with that word.
     val index = allLines.flatMap { line =>
       val words = line.split("""[\s,.?;:'"()!]+""")
-      if (words.length >= 1)
+      if (words.length >= 1 && !words(0).isEmpty)
         Some((words(0), line))
       else
         None
@@ -42,7 +43,11 @@ object CouchdoopSparkDemo {
 
     cbOutput.saveAsNewAPIHadoopFile("tests/bogus_01", classOf[String], classOf[CouchbaseAction],
         classOf[CouchbaseOutputFormat], hadoopConf)
-//    cbOutput.saveAsTextFile("tests/cs_out_01")
+
+//    val hadoopJob = Job.getInstance(hadoopConf)
+//    CouchbaseOutputFormat.initJob(hadoopJob, urls, bucket, password)
+//    hadoopConf.setBoolean("spark.hadoop.validateOutputSpecs", false)
+//    cbOutput.saveAsNewAPIHadoopDataset(hadoopConf)
 
     sc.stop()
   }
