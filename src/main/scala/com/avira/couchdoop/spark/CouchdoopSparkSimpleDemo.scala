@@ -1,7 +1,7 @@
 package com.avira.couchdoop.spark
 
-import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseAction}
-import org.apache.hadoop.mapreduce.Job
+import com.avira.couchdoop.exp.CouchbaseAction
+import com.avira.couchdoop.spark.CouchdoopSpark._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.SparkContext._
 
@@ -11,17 +11,13 @@ import org.apache.spark.SparkContext._
 object CouchdoopSparkSimpleDemo {
 
   def main(args: Array[String]) {
-    val urls = args(0)
+    val urls = args(0).split(",").toSeq
     val bucket = args(1)
     val password = args(2)
 
-    val conf = new SparkConf().setAppName("couchdoop-spark simple demo 2")
+    val conf = new SparkConf().setAppName("couchdoop-spark simple demo")
     val sc = new SparkContext(conf)
-
-    // Configure Hadoop CouchbaseOutputFormat.
-    val hadoopJob = Job.getInstance(sc.hadoopConfiguration)
-    CouchbaseOutputFormat.initJob(hadoopJob, urls, bucket, password)
-    val hadoopConf = hadoopJob.getConfiguration
+    implicit val cbOutputConf = CouchbaseOutputConf(urls, bucket, password)
 
     // Create 3 hard-coded documents.
     val cbOutput = sc.parallelize(
@@ -33,7 +29,7 @@ object CouchdoopSparkSimpleDemo {
     )
 
     // Save to Couchbase with CouchbaseOutputFormat.
-    cbOutput.saveAsNewAPIHadoopDataset(hadoopConf)
+    cbOutput.saveToCouchbase
 
     sc.stop()
   }

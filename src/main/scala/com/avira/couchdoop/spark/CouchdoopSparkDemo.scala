@@ -1,7 +1,8 @@
 package com.avira.couchdoop.spark
 
-import com.avira.couchdoop.exp.{CouchbaseOutputFormat, CouchbaseAction}
-import org.apache.hadoop.mapreduce.Job
+import com.avira.couchdoop.exp.CouchbaseAction
+import com.avira.couchdoop.spark.CouchdoopSpark._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.SparkContext._
 
@@ -16,40 +17,47 @@ object CouchdoopSparkDemo {
 
   def main(args: Array[String]) {
     val inputFile = args(0)
-    val urls = args(1)
+    val urls = args(1).split(",").toSeq
     val bucket = args(2)
     val password = args(3)
 
     val conf = new SparkConf().setAppName("couchdoop-spark-demo")
     val sc = new SparkContext(conf)
-
-    // Configure Hadoop CouchbaseOutputFormat.
-    val hadoopJob = Job.getInstance(sc.hadoopConfiguration)
-    CouchbaseOutputFormat.initJob(hadoopJob, urls, bucket, password)
-    val hadoopConf = hadoopJob.getConfiguration
+    implicit val cbOutputConf = CouchbaseOutputConf(urls, bucket, password)
 
     val allLines = sc.textFile(inputFile)
 
     // Create an index from the first word of lines to a list of lines with that word.
-    val index = allLines.flatMap { line =>
+    val index = indexLines(allLines)
+
+    // Prepare output for CouchbaseOutputFormat.
+    val cbOutput = index.map {
+      case (key, lines) => (key, CouchbaseAction.createSetAction(lines))
+    }
+
+    // Save to Couchbase with CouchbaseOutputFormat.
+    cbOutput.saveToCouchbase
+
+    sc.stop()
+  }
+
+  /**
+   * Create an index from the first word of lines to a list of lines with that word.
+   * @param allLines lines to index
+   * @return
+   */
+  def indexLines(allLines: RDD[String]): RDD[(String, String)] = {
+    allLines.flatMap { line =>
       val words = line.split("""[\s,.?;:'"()!]+""")
       if (words.length >= 1 && !words(0).isEmpty)
         Some((words(0), line))
       else
         None
-    }.groupByKey()
-
-    // Prepare output for CouchbaseOutputFormat.
-    val cbOutput = index.map {
+    }.groupByKey().map {
       case (firstWord, lines) =>
         val escapedLines = lines.map(_.replaceAll("\"", """\\""""))
         val linesJson = escapedLines.mkString("[\"", "\",\"", "\"]")
-        (firstWord, CouchbaseAction.createSetAction(linesJson))
+        (firstWord, linesJson)
     }
-
-    // Save to Couchbase with CouchbaseOutputFormat.
-    cbOutput.saveAsNewAPIHadoopDataset(hadoopConf)
-
-    sc.stop()
   }
 }
