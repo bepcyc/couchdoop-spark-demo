@@ -23,8 +23,8 @@ object CouchdoopSparkSimpleDemo {
     val cbOutput = sc.parallelize(
       Seq(
         ("x", CouchbaseAction.createSetAction("1")),
-        ("y", CouchbaseAction.createSetAction("2")),
-        ("z", CouchbaseAction.createSetAction("3"))
+        ("y", CouchbaseAction.createAddAction("2")),
+        ("z", CouchbaseAction.createDeleteAction)
       )
     )
 
