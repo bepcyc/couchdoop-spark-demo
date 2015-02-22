@@ -1,15 +1,15 @@
+organization := "com.avira.couchdoop"
+
 name := "couchdoop-spark-demo"
 
-version := "1.0.0"
+version := "1.1.0-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "1.2.0-cdh5.3.0" % "provided",
   "org.apache.hadoop" % "hadoop-client" % "2.5.0-cdh5.3.0" % "provided",
-  // couchdoop 1.7.3 uses couchbase-client 1.4.7 which uses httpcore 4.3 which is imcompatible with httpcore 4.2.5 from CDH
-//  "com.avira.couchdoop" % "couchdoop" % "1.7.3"
-  "com.avira.couchdoop" % "couchdoop" % "1.8.0-SNAPSHOT"
+  "com.avira.couchdoop" %% "couchdoop-spark" % "1.0.0-SNAPSHOT"
 )
 
 resolvers ++= Seq(

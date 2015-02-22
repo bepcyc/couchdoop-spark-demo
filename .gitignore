@@ -12,7 +12,8 @@ src_managed/
 project/boot/
 project/plugins/project/
 
-# Scala-IDE IntelliJ specific
+# Scala-IDE, IntelliJ specific
 .scala_dependencies
 .worksheet
 .idea/
+*.iml
