@@ -17,14 +17,14 @@ object CouchdoopSparkSimpleDemo {
 
     val conf = new SparkConf().setAppName("couchdoop-spark simple demo")
     val sc = new SparkContext(conf)
-    implicit val cbOutputConf = CouchbaseOutputConf(urls, bucket, password)
+    implicit val cbOutputConf = CouchdoopExportConf(urls, bucket, password)
 
     // Create 3 hard-coded documents.
     val cbOutput = sc.parallelize(
       Seq(
         ("x", CouchbaseAction.createSetAction("1")),
-        ("y", CouchbaseAction.createSetAction("2")),
-        ("z", CouchbaseAction.createSetAction("3"))
+        ("y", CouchbaseAction.createAddAction("2")),
+        ("z", CouchbaseAction.createDeleteAction)
       )
     )
 
