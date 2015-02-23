@@ -23,7 +23,7 @@ object CouchdoopSparkDemo {
 
     val conf = new SparkConf().setAppName("couchdoop-spark-demo")
     val sc = new SparkContext(conf)
-    implicit val cbOutputConf = CouchbaseOutputConf(urls, bucket, password)
+    implicit val cbOutputConf = CouchdoopExportConf(urls, bucket, password)
 
     val allLines = sc.textFile(inputFile)
 

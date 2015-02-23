@@ -17,7 +17,7 @@ object CouchdoopSparkSimpleDemo {
 
     val conf = new SparkConf().setAppName("couchdoop-spark simple demo")
     val sc = new SparkContext(conf)
-    implicit val cbOutputConf = CouchbaseOutputConf(urls, bucket, password)
+    implicit val cbOutputConf = CouchdoopExportConf(urls, bucket, password)
 
     // Create 3 hard-coded documents.
     val cbOutput = sc.parallelize(
