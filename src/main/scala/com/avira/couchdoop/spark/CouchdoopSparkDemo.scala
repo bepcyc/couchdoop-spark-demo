@@ -49,7 +49,7 @@ object CouchdoopSparkDemo {
   def indexLines(allLines: RDD[String]): RDD[(String, String)] = {
     allLines.flatMap { line =>
       val words = line.split("""[\s,.?;:'"()!]+""")
-      if (words.length >= 1 && !words(0).isEmpty)
+      if (words.nonEmpty && words(0).nonEmpty)
         Some((words(0), line))
       else
         None
